@@ -65,9 +65,9 @@ For **consecutive tenors** (1Y→2Y→3Y→4Y→5Y), the bootstrap is algebraic 
 DF[n] = (1 - S[n] × annuitySum) / (1 + S[n] × τ[n])
 ```
 
-For **non-consecutive tenors** (5Y→7Y, 7Y→10Y, 10Y→15Y), a Brent solver finds DF[n] such that the par swap values zero. At each iteration, intermediate discount factors (e.g., 6Y between 5Y and 7Y) are re-interpolated log-linearly, ensuring consistency between the interpolated DFs and the final bootstrapped DF.
+For **non-consecutive tenors** (5Y→7Y, 7Y→10Y, 10Y→15Y), intermediate discount factors (e.g., 6Y between 5Y and 7Y) are log-linearly interpolated before solving for the longer tenor.
 
-This approach is more accurate than pre-interpolating intermediates before bootstrapping, because it avoids fixing DFs at intermediate dates before the longer-tenor DF is known.
+The production JavaScript pricer at checkmyswap.com uses a Brent solver for these gaps, re-interpolating intermediates at each iteration for tighter consistency. The `match_js` test in `core/tests/` demonstrates the iterative approach and verifies it matches the production JS to machine epsilon.
 
 Interpolation between bootstrapped nodes is **log-linear on discount factors** — the same method used by major clearing houses.
 

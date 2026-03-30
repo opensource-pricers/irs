@@ -1,3 +1,5 @@
+#![allow(unused_imports, unused_variables)]
+
 pub mod math;
 pub mod daycount;
 pub mod conventions;
