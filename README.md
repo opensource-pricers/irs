@@ -31,7 +31,7 @@ let conv = Currency::USD.convention();
 
 | Module | Description |
 |---|---|
-| `bootstrap.rs` | OIS discount factor bootstrap with Brent solver for non-consecutive tenors |
+| `bootstrap.rs` | OIS discount factor bootstrap — algebraic for consecutive tenors, log-linear interpolation for gaps |
 | `math.rs` | RAY fixed-point arithmetic (1e27 precision, U256 intermediates) |
 | `daycount.rs` | ACT/360, ACT/365F, 30/360, 30E/360 |
 | `conventions.rs` | Per-currency conventions: day count, settlement days, basis, frequency |
