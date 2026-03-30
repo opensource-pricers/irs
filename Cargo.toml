@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["core", "solana"]
+
+[workspace.dependencies]
+ethnum = "1"

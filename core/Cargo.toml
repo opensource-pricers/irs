@@ -1,0 +1,8 @@
+[package]
+name = "swap-core"
+version = "0.1.0"
+edition = "2021"
+description = "Fixed-income discount factor bootstrap and valuation — machine-epsilon precision"
+
+[dependencies]
+ethnum = { workspace = true }
