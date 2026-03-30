@@ -53,7 +53,9 @@ let conv = Currency::USD.convention();
 
 The contract supports the full lifecycle: curve publication with a challenge period, swap creation between two counterparties, daily revaluation, reconciliation (via hash commitments — trade details stay private), portfolio compression, and custodian attestation.
 
-**Note:** swap accounts on-chain store notional and rate in clear. A future version will use zero-knowledge proofs to keep trade economics private while still allowing on-chain verification.
+**Privacy model:** counterparties are pseudonymous (Solana public keys — not linked to legal identities unless disclosed). However, trade economics (notional, rate) are stored in clear on-chain, visible to anyone. This is a known limitation.
+
+**Roadmap:** a future version will use zero-knowledge proofs to keep both counterparty identities and trade economics private, while still allowing on-chain verification that the valuation is correct. This is essential for institutional adoption — banks will not put their positions on a public ledger.
 
 | Module | Description |
 |---|---|
