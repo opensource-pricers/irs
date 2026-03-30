@@ -13,7 +13,7 @@ pub mod settlement;
 pub mod fixings;
 
 pub use math::{Ray, RAY, HALF_RAY};
-pub use conventions::{Currency, DayCountConvention};
+pub use conventions::{Currency, CurrencyConvention, DayCountConvention, BusinessDayConvention};
 pub use bootstrap::bootstrap_ois;
 pub use schedule::Frequency;
 pub use leg::{LegDescriptor, LegType};

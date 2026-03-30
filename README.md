@@ -95,11 +95,31 @@ The curves used in production at [checkmyswap.com](https://www.checkmyswap.com) 
 
 All sources are free, public, and updated daily.
 
-## Limitations
+## Calendar and conventions
 
-- No holiday calendar — payment dates use exact 365-day years
+The library provides exact per-currency conventions (settlement days, day count basis, payment frequency) but **does not embed holiday calendars**. The caller is responsible for:
+
+1. Computing the settlement date: `settle = add_business_days(today, convention.settlement_days, calendar)`
+2. Generating payment dates: `modified_following(add_years(settle, y), calendar)` for each year
+3. Passing pre-adjusted dates to the bootstrap and pricing functions
+
+This design is intentional — holiday calendars are jurisdiction-specific and change over time. The core math is calendar-agnostic.
+
+### Per-currency conventions
+
+| Currency | Index | Day count | Basis | Settlement | Frequency |
+|---|---|---|---|---|---|
+| USD | SOFR | ACT/360 | 360 | T+2 | Annual |
+| EUR | ESTR | ACT/360 | 360 | T+2 | Annual |
+| GBP | SONIA | ACT/365F | 365 | T+0 | Annual |
+| JPY | TONA | ACT/365F | 365 | T+2 | Annual |
+| CHF | SARON | ACT/360 | 360 | T+2 | Annual |
+
+When the correct calendar is provided, the pricer matches the production JavaScript implementation at [checkmyswap.com](https://www.checkmyswap.com) to machine epsilon across all currencies, including forward-starting swaps.
+
+## Other limitations
+
 - No convexity adjustment on xccy basis
-- Forward starts use fractional years, not exact business dates
 - Solana program deployed on devnet only
 
 ## License

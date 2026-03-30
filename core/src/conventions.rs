@@ -27,24 +27,105 @@ pub enum DayCountConvention {
     // ActActICMA = 5,
 }
 
-/// Per-currency convention parameters.
+/// Business day adjustment convention.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BusinessDayConvention {
+    /// Roll to next business day; if that crosses month-end, roll backward instead.
+    ModifiedFollowing,
+    /// No adjustment.
+    Unadjusted,
+}
+
+/// Per-currency OIS swap convention parameters.
+///
+/// The caller is responsible for generating adjusted payment dates using
+/// these conventions and their own holiday calendar. The bootstrap and
+/// pricing functions accept pre-computed dates.
+///
+/// # Example (pseudocode)
+/// ```text
+/// let conv = Currency::USD.convention();
+/// let settle = add_business_days(today, conv.settlement_days, &us_calendar);
+/// for y in 1..=tenor {
+///     let raw = add_years(settle, y);
+///     let adjusted = modified_following(raw, &us_calendar);
+///     payment_dates.push(adjusted);
+/// }
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct CurrencyConvention {
+    /// Day count convention for accrual calculation.
     pub day_count: DayCountConvention,
+    /// Number of fixed-leg payments per year (1 = annual, 2 = semi-annual).
     pub payments_per_year: u8,
+    /// Number of business days between trade date and settlement date.
+    /// USD/EUR/JPY/CHF = T+2, GBP = T+0.
+    pub settlement_days: u8,
+    /// Day count basis denominator (360 or 365).
+    pub basis: u16,
+    /// Business day adjustment rule for payment dates.
+    pub business_day_convention: BusinessDayConvention,
 }
 
 impl Currency {
     pub fn convention(self) -> CurrencyConvention {
         match self {
-            Currency::USD => CurrencyConvention { day_count: DayCountConvention::Act360, payments_per_year: 1 },
-            Currency::EUR => CurrencyConvention { day_count: DayCountConvention::Act360, payments_per_year: 1 },
-            Currency::GBP => CurrencyConvention { day_count: DayCountConvention::Act365Fixed, payments_per_year: 1 },
-            Currency::JPY => CurrencyConvention { day_count: DayCountConvention::Act365Fixed, payments_per_year: 1 },
-            Currency::CHF => CurrencyConvention { day_count: DayCountConvention::Act360, payments_per_year: 1 },
-            Currency::AUD => CurrencyConvention { day_count: DayCountConvention::Act365Fixed, payments_per_year: 2 },
-            Currency::CAD => CurrencyConvention { day_count: DayCountConvention::Act365Fixed, payments_per_year: 2 },
-            Currency::SEK => CurrencyConvention { day_count: DayCountConvention::Act360, payments_per_year: 1 },
+            Currency::USD => CurrencyConvention {
+                day_count: DayCountConvention::Act360,
+                payments_per_year: 1,
+                settlement_days: 2,
+                basis: 360,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::EUR => CurrencyConvention {
+                day_count: DayCountConvention::Act360,
+                payments_per_year: 1,
+                settlement_days: 2,
+                basis: 360,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::GBP => CurrencyConvention {
+                day_count: DayCountConvention::Act365Fixed,
+                payments_per_year: 1,
+                settlement_days: 0, // SONIA settles T+0
+                basis: 365,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::JPY => CurrencyConvention {
+                day_count: DayCountConvention::Act365Fixed,
+                payments_per_year: 1,
+                settlement_days: 2,
+                basis: 365,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::CHF => CurrencyConvention {
+                day_count: DayCountConvention::Act360,
+                payments_per_year: 1,
+                settlement_days: 2,
+                basis: 360,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::AUD => CurrencyConvention {
+                day_count: DayCountConvention::Act365Fixed,
+                payments_per_year: 2,
+                settlement_days: 2,
+                basis: 365,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::CAD => CurrencyConvention {
+                day_count: DayCountConvention::Act365Fixed,
+                payments_per_year: 2,
+                settlement_days: 2,
+                basis: 365,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
+            Currency::SEK => CurrencyConvention {
+                day_count: DayCountConvention::Act360,
+                payments_per_year: 1,
+                settlement_days: 2,
+                basis: 360,
+                business_day_convention: BusinessDayConvention::ModifiedFollowing,
+            },
         }
     }
 

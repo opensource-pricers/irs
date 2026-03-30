@@ -2,7 +2,7 @@
 /// Four atomic types: FIXED, FLOATING, NOTIONAL_EXCHANGE, CONDITIONAL.
 use crate::math::{Ray, RAY, ray_mul};
 use crate::interpolation::interpolate_df;
-use ethnum::{I256, U256};
+use ethnum::I256;
 
 /// Cashflow type.
 #[derive(Debug, Clone, Copy, PartialEq)]

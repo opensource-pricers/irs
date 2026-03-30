@@ -11,7 +11,7 @@
 
 use crate::math::{Ray, RAY, ray_mul, ray_div};
 use crate::conventions::Currency;
-use crate::daycount::{year_fraction, year_fractions};
+use crate::daycount::year_fractions;
 
 /// Error types for bootstrap.
 #[derive(Debug, PartialEq)]

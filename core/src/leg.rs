@@ -1,7 +1,7 @@
 /// Leg builder per SPEC-005 §3.
 /// Assembles cashflows from a leg descriptor.
 
-use crate::math::{Ray, RAY, ray_mul};
+use crate::math::{Ray, ray_mul};
 use crate::conventions::{Currency, DayCountConvention};
 use crate::daycount::year_fraction;
 use crate::schedule::{Frequency, generate_schedule};

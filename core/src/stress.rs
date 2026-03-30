@@ -1,5 +1,5 @@
 /// Stress scenarios per SPEC-006 §5.2.
-use crate::math::{Ray, RAY, ONE_BP};
+use crate::math::{Ray, ONE_BP};
 use crate::bootstrap::bootstrap_annual;
 use crate::cashflow::{Cashflow, value_cashflows};
 

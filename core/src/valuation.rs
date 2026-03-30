@@ -1,5 +1,5 @@
 /// Trade valuation and risk measures per SPEC-005.
-use crate::math::{Ray, RAY, ray_mul, bps_to_ray, ONE_BP};
+use crate::math::{Ray, ONE_BP};
 use crate::bootstrap::bootstrap_annual;
 use crate::cashflow::{Cashflow, value_cashflows};
 
@@ -41,7 +41,7 @@ pub fn bucket_dv01(
     dates: &[u64],
 ) -> Vec<i128> {
     let dfs_base = bootstrap_annual(rates).unwrap();
-    let pv_base = value_cashflows(cashflows, settlement, dates, &dfs_base);
+    let _pv_base = value_cashflows(cashflows, settlement, dates, &dfs_base);
 
     let mut buckets = Vec::with_capacity(rates.len());
     for k in 0..rates.len() {
