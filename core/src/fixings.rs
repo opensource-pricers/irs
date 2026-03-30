@@ -1,3 +1,15 @@
+/// Overnight rate fixing store and compounding engine.
+///
+/// For OIS floating legs, the coupon is NOT a forward rate.
+/// It's the compounded realized overnight rate over the accrual period:
+///
+///   CompoundedRate = Π(1 + r_i × n_i/N) - 1
+///
+/// where r_i = overnight rate on day i
+///       n_i = number of calendar days that fixing applies (1, or 3 over weekends)
+///       N   = 360 (ACT/360) or 365 (ACT/365F)
+
+use crate::math::{Ray, RAY, ray_to_f64};
 
 /// A single daily overnight rate fixing.
 #[derive(Debug, Clone)]

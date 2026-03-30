@@ -3,7 +3,7 @@
 /// Computes what to pay, to whom, when — but does NOT move money.
 /// Output is consumed by SWIFT, Fnality, Partior, or internal ledger.
 
-use crate::math::{Ray, RAY, ray_to_f64};
+use crate::math::{Ray, RAY, ray_mul, ray_to_f64};
 use crate::bootstrap::{bootstrap_annual, forward_rate};
 use crate::conventions::Currency;
 use crate::daycount::year_fraction;
@@ -44,7 +44,7 @@ pub fn generate_settlement_instructions(
     swaps: &[SwapTerms],
     payment_date: u64,
     rates: &[Ray],
-    _settlement: u64,
+    settlement: u64,
 ) -> Vec<SettlementInstruction> {
     let dfs = match bootstrap_annual(rates) {
         Ok(dfs) => dfs,

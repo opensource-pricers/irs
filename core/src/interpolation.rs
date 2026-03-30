@@ -1,5 +1,5 @@
 /// Linear interpolation on discount factors per SPEC-003 §5.
-use crate::math::{Ray, RAY, ray_mul};
+use crate::math::{Ray, RAY, ray_mul, ray_div};
 
 /// Interpolate a discount factor at time `t` from a curve of (dates, dfs).
 ///

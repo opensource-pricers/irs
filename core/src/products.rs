@@ -1,10 +1,10 @@
 /// Product templates per SPEC-005 §6.
 /// Convenience constructors for common instruments.
 
-use crate::math::Ray;
+use crate::math::{Ray, RAY};
 use crate::conventions::Currency;
 use crate::schedule::Frequency;
-use crate::leg::LegDescriptor;
+use crate::leg::{LegDescriptor, LegType};
 
 /// Vanilla IRS (pay fixed, receive floating or vice versa).
 pub fn irs(
