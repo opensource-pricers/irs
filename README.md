@@ -2,7 +2,7 @@
 
 Rust implementation of OIS (Overnight Index Swap) discount factor bootstrap and swap valuation. Algebraically exact — proven to match machine epsilon (1e-16).
 
-Used in production by [CheckMySwap](https://www.checkmyswap.com).
+The production pricer at [CheckMySwap](https://www.checkmyswap.com) is implemented in JavaScript (Cloudflare Worker) using the same algorithm. Both implementations have been verified to produce identical results to machine epsilon (1e-16).
 
 ## What's inside
 
