@@ -47,7 +47,11 @@ let conv = Currency::USD.convention();
 
 ### `solana/` — On-chain program (deployment planned)
 
-Solana BPF program for verifiable curve publication and swap valuation on-chain. The intent is to deploy this contract on Solana mainnet so that any curve publication and swap valuation can be independently verified on-chain — removing the need to trust a single pricing provider.
+**The problem:** when two banks disagree on the value of a swap, there is no neutral referee. Each side uses its own curve, its own model, its own calendar. Disputes are resolved by phone.
+
+**The solution:** publish the OIS curve on Solana. Any counterparty can verify that the curve was published at a specific time, was not altered after the fact, and that the valuation is reproducible from the on-chain data. No trust required — just math on an immutable ledger.
+
+The contract supports the full lifecycle: curve publication with a challenge period, swap creation between two counterparties, daily revaluation, reconciliation, portfolio compression, and custodian attestation.
 
 | Module | Description |
 |---|---|
