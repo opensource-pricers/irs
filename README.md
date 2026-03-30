@@ -1,19 +1,40 @@
 # IRS — Open Source Interest Rate Swap Pricer
 
-Rust implementation of OIS (Overnight Index Swap) discount factor bootstrap and swap valuation.
+Rust implementation of OIS (Overnight Index Swap) discount factor bootstrap and swap valuation. Built for [CheckMySwap](https://www.checkmyswap.com) — a free tool for verifying bank swap marks against real interbank trade data.
 
-The production pricer at [CheckMySwap](https://www.checkmyswap.com) uses a JavaScript implementation of the same algorithm. Both have been verified to produce identical results to machine epsilon (1e-16) across all currencies, spot and forward-starting swaps.
+## Why this exists
+
+When a bank tells you your swap is worth -$4.2M, how do you check? You need an OIS discount curve, a bootstrap algorithm, and a pricer. This library provides all three, with the same precision as institutional pricing systems.
+
+The production pricer at [checkmyswap.com](https://www.checkmyswap.com) uses a JavaScript implementation of the same algorithm. Both have been verified to produce identical results to machine epsilon (1e-16) across all 5 currencies, spot and forward-starting swaps.
+
+## Quick example
+
+```rust
+use swap_core::conventions::Currency;
+
+let conv = Currency::USD.convention();
+// conv.settlement_days = 2
+// conv.basis = 360
+// conv.day_count = ACT/360
+// conv.business_day_convention = ModifiedFollowing
+
+// 1. Generate calendar-adjusted payment dates (caller's responsibility)
+// 2. Compute year fractions: actual_days / basis
+// 3. Bootstrap discount factors from par OIS rates
+// 4. Price any swap using the bootstrapped DFs
+```
 
 ## What's inside
 
 ### `core/` — Pricing library
 
-| Module | What it does |
+| Module | Description |
 |---|---|
-| `bootstrap.rs` | OIS discount factor bootstrap: `DF[n] = (1 - S[n] × annuity) / (1 + S[n] × τ)` |
+| `bootstrap.rs` | OIS discount factor bootstrap with Brent solver for non-consecutive tenors |
 | `math.rs` | RAY fixed-point arithmetic (1e27 precision, U256 intermediates) |
 | `daycount.rs` | ACT/360, ACT/365F, 30/360, 30E/360 |
-| `conventions.rs` | Per-currency conventions: day count, settlement days, basis, payment frequency |
+| `conventions.rs` | Per-currency conventions: day count, settlement days, basis, frequency |
 | `interpolation.rs` | Log-linear discount factor interpolation |
 | `schedule.rs` | Payment date generation (annual, semi-annual, quarterly, monthly) |
 | `cashflow.rs` | Fixed, floating, notional exchange, conditional cash flows |
@@ -26,9 +47,9 @@ The production pricer at [CheckMySwap](https://www.checkmyswap.com) uses a JavaS
 
 ### `solana/` — On-chain program
 
-Solana BPF program for verifiable curve publication and swap valuation.
+Solana BPF program for verifiable curve publication and swap valuation on-chain.
 
-| Module | What it does |
+| Module | Description |
 |---|---|
 | `instruction.rs` | 12 instructions: BootstrapDirect, PublishCurve, ActivateCurve, CreateSwap, RevalueSwap, etc. |
 | `processor.rs` | All instruction handlers with PDA verification |
@@ -38,29 +59,30 @@ Solana BPF program for verifiable curve publication and swap valuation.
 
 ## Bootstrap algorithm
 
-The bootstrap solves the par swap condition algebraically at each tenor:
+For **consecutive tenors** (1Y→2Y→3Y→4Y→5Y), the bootstrap is algebraic — no iteration needed:
 
 ```
-S[n] × Σ(τ[i] × DF[i], i=1..n) = 1 - DF[n]
-
-⟹ DF[n] = (1 - S[n] × annuitySum) / (1 + S[n] × τ[n])
+DF[n] = (1 - S[n] × annuitySum) / (1 + S[n] × τ[n])
 ```
 
-No iteration. No solver. Algebraically exact.
+For **non-consecutive tenors** (5Y→7Y, 7Y→10Y, 10Y→15Y), a Brent solver finds DF[n] such that the par swap values zero. At each iteration, intermediate discount factors (e.g., 6Y between 5Y and 7Y) are re-interpolated log-linearly, ensuring consistency between the interpolated DFs and the final bootstrapped DF.
 
-For intermediate tenors (e.g., 6Y between the 5Y and 7Y nodes), discount factors are log-linearly interpolated.
+This approach is more accurate than pre-interpolating intermediates before bootstrapping, because it avoids fixing DFs at intermediate dates before the longer-tenor DF is known.
+
+Interpolation between bootstrapped nodes is **log-linear on discount factors** — the same method used by major clearing houses.
 
 ## Precision
 
 | Test | Result |
 |---|---|
-| Par rate round-trip (spot, all currencies) | < 1e-15 (machine epsilon) |
-| Par rate round-trip (forward start) | PV = $0.000000 at par rate |
-| Rust vs JavaScript (with same calendar) | Identical to machine epsilon |
+| Par rate round-trip (spot, all 5 currencies) | < 1e-12 bp |
+| PV at forward par rate ($10M notional) | < $0.00005 |
+| Spot/forward DF consistency | Exact to machine epsilon |
+| Rust vs JavaScript (same calendar) | Identical to machine epsilon |
 
 ## Conventions
 
-The library provides exact per-currency conventions but **does not embed holiday calendars**. The caller is responsible for generating business-day-adjusted payment dates.
+The library documents exact per-currency conventions but **does not embed holiday calendars**. The caller generates business-day-adjusted payment dates using their own calendar and passes them to the bootstrap and pricing functions.
 
 | Currency | Index | Day count | Basis | Settlement | Frequency | Business day rule |
 |---|---|---|---|---|---|---|
@@ -72,7 +94,7 @@ The library provides exact per-currency conventions but **does not embed holiday
 
 Conventions sourced from [OpenGamma Strata](https://strata.opengamma.io/apidocs/com/opengamma/strata/product/swap/type/FixedOvernightSwapConventions.html) and ISDA 2006 definitions.
 
-### Calendar integration
+### Calendar integration example
 
 ```text
 let conv = Currency::USD.convention();
@@ -81,32 +103,35 @@ for y in 1..=tenor {
     let adjusted = modified_following(add_years(settle, y), &us_calendar);
     payment_dates.push(adjusted);
 }
-// Pass adjusted dates to bootstrap/pricing — the core math is calendar-agnostic
+// Pass adjusted dates to bootstrap/pricing
 ```
 
-## Build
+## Build and test
 
 ```bash
 cargo build -p swap-core
 cargo test -p swap-core
 ```
 
+The `match_js` test verifies the Rust bootstrap against the production JavaScript pricer for USD, GBP, and CHF with calendar-adjusted payment dates.
+
 ## Data sources
 
-The curves served at [checkmyswap.com](https://www.checkmyswap.com) come from:
+The curves served at [checkmyswap.com](https://www.checkmyswap.com) are derived from:
 
 | Currency | Source | Type |
 |---|---|---|
-| USD, EUR | [DTCC CFTC Public Swap Data](https://pddata.dtcc.com/) | Actual interbank trades (Dodd-Frank mandated) |
-| GBP, JPY, CHF | [Eurex Clearing Settlement Prices](https://www.eurex.com/ec-en/clear/eurex-otc-clear/settlement-prices) | Official clearing house settlement |
+| USD, EUR | [DTCC CFTC Public Swap Data](https://pddata.dtcc.com/) | Actual interbank swap trades (Dodd-Frank mandated, free) |
+| GBP, JPY, CHF | [Eurex Clearing Settlement Prices](https://www.eurex.com/ec-en/clear/eurex-otc-clear/settlement-prices) | Official clearing house settlement (free) |
 
-All sources are free, public, and updated daily.
+Updated every business day. Historical curves archived permanently.
 
 ## Limitations
 
-- No embedded holiday calendar (by design — caller provides adjusted dates)
+- No embedded holiday calendar — by design, the caller provides adjusted dates
 - No convexity adjustment on cross-currency basis swaps
 - Solana program deployed on devnet only
+- No holiday-adjusted schedule generation (use a calendar library like `bdays` or `chrono` with holiday data)
 
 ## License
 
