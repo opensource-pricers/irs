@@ -45,9 +45,9 @@ let conv = Currency::USD.convention();
 | `settlement.rs` | Settlement instructions with bilateral netting |
 | `fixings.rs` | Overnight rate compounding for floating legs |
 
-### `solana/` — On-chain program
+### `solana/` — On-chain program (deployment planned)
 
-Solana BPF program for verifiable curve publication and swap valuation on-chain.
+Solana BPF program for verifiable curve publication and swap valuation on-chain. The intent is to deploy this contract on Solana mainnet so that any curve publication and swap valuation can be independently verified on-chain — removing the need to trust a single pricing provider.
 
 | Module | Description |
 |---|---|
@@ -130,7 +130,7 @@ Updated every business day. Historical curves archived permanently.
 
 - No embedded holiday calendar — by design, the caller provides adjusted dates
 - No convexity adjustment on cross-currency basis swaps
-- Solana program deployed on devnet only
+- Solana program currently on devnet — mainnet deployment planned
 - No holiday-adjusted schedule generation (use a calendar library like `bdays` or `chrono` with holiday data)
 
 ## License
