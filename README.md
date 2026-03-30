@@ -51,7 +51,9 @@ let conv = Currency::USD.convention();
 
 **The solution:** publish the OIS curve on Solana. Any counterparty can verify that the curve was published at a specific time, was not altered after the fact, and that the valuation is reproducible from the on-chain data. No trust required — just math on an immutable ledger.
 
-The contract supports the full lifecycle: curve publication with a challenge period, swap creation between two counterparties, daily revaluation, reconciliation, portfolio compression, and custodian attestation.
+The contract supports the full lifecycle: curve publication with a challenge period, swap creation between two counterparties, daily revaluation, reconciliation (via hash commitments — trade details stay private), portfolio compression, and custodian attestation.
+
+**Note:** swap accounts on-chain store notional and rate in clear. A future version will use zero-knowledge proofs to keep trade economics private while still allowing on-chain verification.
 
 | Module | Description |
 |---|---|
