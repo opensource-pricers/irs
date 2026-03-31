@@ -136,7 +136,6 @@ Updated every business day. Historical curves archived permanently.
 
 - No embedded holiday calendar — by design, the caller provides adjusted dates
 - No CVA/FVA/XVA adjustments — this prices vanilla OIS swaps only
-- No convexity adjustment on cross-currency basis swaps
 - Solana program currently on devnet
 - ZK proving tested but not production-ready
 
