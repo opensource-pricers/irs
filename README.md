@@ -4,7 +4,9 @@ Rust implementation of OIS (Overnight Index Swap) discount factor bootstrap and 
 
 ## Why this exists
 
-When a bank tells you your swap is worth -$4.2M, how do you check? You need an OIS discount curve, a bootstrap algorithm, and a pricer. This library provides all three, with the same precision as institutional pricing systems.
+Your bank says your swap is worth -$4.2M. You have no way to check — Bloomberg costs $24K/year, and asking another bank for a second opinion reveals your position.
+
+This library provides an independent OIS curve (from actual interbank trades published by the DTCC and Eurex Clearing) and a pricer with the same precision as institutional systems. Pull the curve, enter your swap terms, compare.
 
 The production pricer at [checkmyswap.com](https://www.checkmyswap.com) uses a JavaScript implementation of the same algorithm. Both have been verified to produce identical results to machine epsilon (1e-16) across all 5 currencies, spot and forward-starting swaps.
 
@@ -45,21 +47,17 @@ let conv = Currency::USD.convention();
 | `settlement.rs` | Settlement instructions with bilateral netting |
 | `fixings.rs` | Overnight rate compounding for floating legs |
 
-### `solana/` — On-chain program (deployment planned)
+### `solana/` — On-chain curve publication
 
-**The problem:** when two banks disagree on the value of a swap, there is no neutral referee. Each side uses its own curve, its own model, its own calendar. Disputes are resolved by phone.
+The OIS curve is published daily on Solana. This creates an immutable, timestamped record that a specific curve existed at a specific time — no one can claim after the fact that a different curve was used.
 
-**The solution:** publish the OIS curve on Solana. Any counterparty can verify that the curve was published at a specific time, was not altered after the fact, and that the valuation is reproducible from the on-chain data. No trust required — just math on an immutable ledger.
+The contract also supports swap creation, revaluation, reconciliation (via hash commitments), portfolio compression, and custodian attestation. These are experimental — the primary value is the curve timestamp.
 
-The contract supports the full lifecycle: curve publication with a challenge period, swap creation between two counterparties, daily revaluation, reconciliation (via hash commitments — trade details stay private), portfolio compression, and custodian attestation.
-
-**Privacy model:** counterparties are pseudonymous (Solana public keys — not linked to legal identities unless disclosed). However, trade economics (notional, rate) are stored in clear on-chain, visible to anyone. This is a known limitation.
-
-**Roadmap:** a future version will use zero-knowledge proofs to keep both counterparty identities and trade economics private, while still allowing on-chain verification that the valuation is correct. This is essential for institutional adoption — banks will not put their positions on a public ledger.
+**Privacy:** counterparties are pseudonymous (Solana public keys). Trade economics are stored in clear. For institutional use, trade-level privacy would require zero-knowledge proofs — the pricing code has been successfully tested in a zkVM (RISC Zero, 524K cycles, 60s proof time) but this is not yet production-ready.
 
 | Module | Description |
 |---|---|
-| `instruction.rs` | 12 instructions: BootstrapDirect, PublishCurve, ActivateCurve, CreateSwap, RevalueSwap, etc. |
+| `instruction.rs` | 12 instructions: PublishCurve, ActivateCurve, CreateSwap, RevalueSwap, etc. |
 | `processor.rs` | All instruction handlers with PDA verification |
 | `state.rs` | On-chain accounts: CurveSnapshot, SwapAccount, ReconciliationAccount |
 | `pda.rs` | Program Derived Address derivation for curves, swaps, attestations |
@@ -137,9 +135,10 @@ Updated every business day. Historical curves archived permanently.
 ## Limitations
 
 - No embedded holiday calendar — by design, the caller provides adjusted dates
+- No CVA/FVA/XVA adjustments — this prices vanilla OIS swaps only
 - No convexity adjustment on cross-currency basis swaps
-- Solana program currently on devnet — mainnet deployment planned
-- No holiday-adjusted schedule generation (use a calendar library like `bdays` or `chrono` with holiday data)
+- Solana program currently on devnet
+- ZK proving tested but not production-ready
 
 ## License
 
